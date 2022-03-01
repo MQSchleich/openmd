@@ -26,7 +26,7 @@ class SimulatorLJ(Simlator):
             self._force = force
         self._force_constants = force_constants
         if integrator is not None:
-            self.integrator = integrator
+            self._integrator = integrator
 
         @property()
         def mass(self):
@@ -109,12 +109,24 @@ class SimulatorLJ(Simlator):
             return self._force
 
         @force.setter
-        def initial_values(self, func):
+        def force(self, func):
             self._force = func
 
         @force.deleter
-        def initial_values(self):
+        def force(self):
             del self._force
+
+        @property()
+        def integrator(self):
+            return self._integrator
+
+        @force.setter
+        def force(self, func):
+            self._integrator = func
+
+        @force.deleter
+        def force(self):
+            del self._integrator
 
     def integration_wrapper(self):
         """
@@ -133,7 +145,7 @@ class SimulatorLJ(Simlator):
         )
         return (positions, velocities)
 
-    def integrator(self, positions, velocities):
+    def _integrator(self, positions, velocities):
 
         acc = self.calc_accel(positions[:, :, 0], self.force_constants)
         for i in range(0, self.num_steps - 1):
@@ -144,10 +156,10 @@ class SimulatorLJ(Simlator):
             velocities[:, :, i + 1] = velocity_pr + 0.5 * acc * self.time_step
         return [positions, velocities]
 
-    def apply_boundary():
+    def _apply_boundary():
         raise NotImplementedError
 
-    def allocate_simulation(self):
+    def _allocate_simulation(self):
 
         """Pre allocating RAM for the integration
 
@@ -167,17 +179,17 @@ class SimulatorLJ(Simlator):
         velocities[:, :, 0] = initial_velocities
         return (positions, velocities)
 
-    def calc_pairwise_distance():
+    def _calc_pairwise_distance():
         raise NotImplementedError
 
     def _force():
         raise NotImplementedError
 
-    def calc_accel():
+    def _calc_accel():
         raise NotImplementedError
 
-    def save_to_disk():
+    def _save_to_disk():
         raise NotImplementedError
 
-    def plot_results():
+    def _plot_results():
         raise NotImplementedError
