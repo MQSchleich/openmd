@@ -142,7 +142,7 @@ class SimulatorLJ(Simlator):
         """
         # assert type(force_constants) == float, "force constant must be of type float but is"+str(type(float))
         positions, velocities = self.allocate_simulation()
-        # calculate chunks
+        # calculate chunks such that the for-loop from the integretor is written here and the integrator just called
         positions, velocities = self.integrator(
             positions=positions, velocities=velocities
         )
