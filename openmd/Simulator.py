@@ -1,6 +1,3 @@
-from tkinter.messagebox import NO
-
-
 class Simulator:
     def __init__(self) -> None:
         raise NotImplementedError
