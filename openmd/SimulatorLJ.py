@@ -251,6 +251,9 @@ class SimulatorLJ(Simulator):
             difference = self._calc_pairwise_distance(
                 particle=i, positions=positions, box_length=box_length
             )
+            if self._periodic:
+                difference[difference > box_length / 2] -= box_length
+                difference[difference <= -box_length / 2] += box_length
             force_t = -48 * epsilon * np.power(sigma, 12) / np.power(
                 difference, 13
             ) - 24 * epsilon * np.power(sigma, 7) / np.power(difference, 7)
