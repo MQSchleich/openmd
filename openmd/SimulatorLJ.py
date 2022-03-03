@@ -186,8 +186,8 @@ class SimulatorLJ(Simulator):
             )
 
         # calculate energies
-        kinetic_energies = self._kinetic_energy(velocities)
-        potential_energies = self._LJ_energy(positions)
+        kinetic_energies = self._kinetic_energy(velocities)/positions.shape[0]
+        potential_energies = self._LJ_energy(positions)/positions.shape[0]
         total_energies = kinetic_energies + potential_energies
 
         # needs to save to disk & plots
@@ -279,7 +279,7 @@ class SimulatorLJ(Simulator):
 
     def _kinetic_energy(self, velocities):
 
-        return 0.5 * self.mass * np.power(velocities, 2)
+        return np.sum(0.5 * self.mass * np.power(velocities, 2), axis=0)
 
     def _LJ_energy(self, positions):
 
