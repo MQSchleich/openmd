@@ -66,7 +66,7 @@ class Simulator:
         plt.rcParams["figure.figsize"] = self.figsize[0], self.figsize[1]
         plt.figure()
 
-        for i in range(len(params)):
+        for i in range(len(ylist)):
 
             if len(self.grid.shape) == 1:  # shared
                 plt.plot(self.grid, self.results[i], label=str(self.result_name[i]))
