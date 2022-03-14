@@ -4,7 +4,27 @@
 ![Test](https://github.com/MQSchleich/continuous-template/actions/workflows/python-app.yaml/badge.svg?branch=main)
 
 
-# continious-template
-A template for rapid, agile or lean development of python applications using the GitHub CI 
-# Check how to write decent PyPi packages 
-https://github.com/judy2k/publishing_python_packages_talk
+# OpenMD 
+
+## Why? 
+
+The field of molecular simulations has gone through decades of development. The technical legacy is quite huge and a burden for researchers and developers alike. We think everyone should have the right and and the means to do research and use software tools to do so. 
+
+## Vision
+
+We accelerate the computational development of the chemical and life sciences 
+ 
+## Mission
+We develop a molecular dynamics package that enables researchers. We enable research by writing free, open and easy to use software. We offer a platform for students to learn and grow.
+
+## Get started
+
+We made educational material to deep dive on molecular simulations just take a look at our notebooks. Got a new idea? Great! Open an issue and one of our maintainers will get back to you. 
+
+## What are we developing?
+
+We focus on the most important parts of a simulation and improve from there. Therefore, we first develop Lennard-Jones simulations and will go from there. The package grows with its users.
+
+## What are we not developing?
+
+A routine software for usage of routine tasks (yet). 
