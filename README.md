@@ -8,13 +8,14 @@
 
 ## Why? 
 
-The field of molecular simulations has gone through decades of development. The technical legacy is quite huge and a burden for researchers and developers alike. We think everyone should have the right and and the means to do research and use software tools to do so. 
+The field of molecular simulations has gone through decades of development. During my studies in computational science, I experienced the technical legacy is introducing hurdles to learn and improve computational methods. Easy-to-use tools are usually only commericially available and thus not accessible to the wider community. We think everyone should have the right and the means to do research in the simulation sciences and share and develop new software in the field of molecular modelling. 
 
 ## Vision
 
 We accelerate the computational development of the chemical and life sciences 
  
 ## Mission
+
 We develop a molecular dynamics package that enables researchers. We enable research by writing free, open and easy to use software. We offer a platform for students to learn and grow.
 
 ## Get started
