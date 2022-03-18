@@ -8,6 +8,8 @@ from Simulator import Simulator
 class SimulatorLJ(Simulator):
     def __init__(
         self,
+        path,
+        title,
         mass,
         sim_time: float,
         time_step: float,
@@ -17,8 +19,12 @@ class SimulatorLJ(Simulator):
         force_constants=[1, 1],
         integrator=None,
         periodic=True,
+        figsize=(10, 10),
+        dpi=300,
     ) -> None:
-
+        
+        self.path = path
+        self.title = title
         self.mass = mass
         self.sim_time = sim_time
         self.time_step = time_step
@@ -33,6 +39,8 @@ class SimulatorLJ(Simulator):
         if integrator is not None:
             self.integrator = integrator
         self.periodic = periodic
+        self.figsize = figsize
+        self.dpi = dpi
 
     def simulate(self):
         """
@@ -55,7 +63,43 @@ class SimulatorLJ(Simulator):
                 iteration=i,
             )
 
-        # needs to save to disk
+        # calculate energies
+        kinetic_energies = self._mean_kinetic_energy(velocities)
+        potential_energies = self._mean_LJ_energy(self.force_constants, positions)
+        total_energies = kinetic_energies + potential_energies
+        
+        # needs to save to disk & plots
+        self.save_to_disk(positions, velocities, kinetic_energies, potential_energies, total_energies)
+        self.plot_results("x", positions[:, 0, :], "y", positions[:, 1, :])
+        self.plot_results("y", positions[:, 1, :], "z", positions[:, 2, :])
+        self.plot_results("x", positions[:, 0, :], "z", positions[:, 2, :])
+        for i in range(3):
+            self.plot_results(
+                "time",
+                np.linspace(0, self.sim_time, self.num_steps),
+                "velocity",
+                velocities[:, i, :],
+            )
+        self.plot_results(
+            "time",
+            np.linspace(0, self.sim_time, self.num_steps),
+            "kinetic energy",
+            [kinetic_energies],
+        )
+
+        self.plot_results(
+            "time",
+            np.linspace(0, self.sim_time, self.num_steps),
+            "potential energy",
+            [potential_energies],
+        )
+
+        self.plot_results(
+            "time",
+            np.linspace(0, self.sim_time, self.num_steps),
+            "total energies",
+            [total_energies],
+        )
 
         return (positions, velocities)
 
@@ -109,6 +153,7 @@ class SimulatorLJ(Simulator):
         )
         acc = forces / self.mass
         return acc
+    
 
     def force(self, positions, constants, box_length):
         """Standard LJ implementation with PBC. Does only return the force to introduce more modularity.
@@ -135,6 +180,33 @@ class SimulatorLJ(Simulator):
             ) - 24 * epsilon * np.power(sigma, 7) / np.power(difference, 7)
             force[i, :] = force_t
         return force
+
+    def _mean_kinetic_energy(self, velocities):
+        
+        return np.mean(np.sum(0.5 * self.mass * np.power(velocities, 2), axis = 1), axis=0)
+
+    def _mean_LJ_energy(self, constants, positions):
+        
+        epsilon, sigma = constants
+        energy_store = np.zeros(positions.shape[2])
+        for i in range(positions.shape[2]):
+            positions_3D = positions[:, :, i]
+            energy = np.zeros((positions.shape[0], 3))
+            for j in range(len(energy)):
+                difference = self.calc_pairwise_distance(
+                    particle=j, positions=positions, box_length=self.box_length
+                )
+                if self.periodic:
+                    difference[difference > self.box_length / 2] -= self.box_length
+                    difference[difference <= -self.box_length / 2] += self.box_length
+
+                potential_t = 4 * epsilon * np.power(sigma, 12) / np.power(
+                    difference, 12
+                ) - 4 * epsilon * np.power(sigma, 6) / np.power(difference, 6)
+
+                energy_store[i] = np.mean(potential_t)
+
+        return energy_store
 
     def calc_pairwise_distance(self, particle, positions, box_length):
         """Standard euclidean pairwise distance. Is abstracted to enable innovation here.
@@ -169,37 +241,31 @@ class SimulatorLJ(Simulator):
         velocities[:, :, 0] = initial_velocities
         return (positions, velocities)
 
-    def save_to_disk():
+    def save_to_disk(
+        self, positions, velocities, kinetic_energies, potential_energies, total_energy
+    ):
         # variables that needed
-        self.path = path
-        self.title = title
-        self.grid = grid
-        self.results = results
 
-        results_file = h5py.File(self.path + f"{self.title}.hdf5", "w")
-        rtset = results_file.create_dataset(
-            f"time", self.grid.shape, dtype="f", data=self.grid
-        )
+        results_file = h5py.File(f"{self.path}/{self.title}.hdf5", "w")
         rset = results_file.create_dataset(
-            f"{self.title}", self.results.shape, dtype="f", data=self.results
+            f"positions", positions.shape, data=positions
+        )
+        vset = results_file.create_dataset(
+            f"velocities", velocities.shape, data=velocities
+        )
+        ke_set = results_file.create_dataset(
+            f"mean kinetic energies", kinetic_energies.shape, data=kinetic_energies
+        )
+        pe_set = results_file.create_dataset(
+            f"mean potential energies", potential_energies.shape, data=potential_energies
+        )
+        E_set = results_file.create_dataset(
+            f"total mean energies", total_energy.shape, data=total_energy
         )
         results_file.close()
 
-        # raise NotImplementedError
-
-    def plot_results():
+    def plot_results(self, xlist_name, xlist, ylist_name, ylist):
         # variables that needed
-        self.path = path
-        self.title = title
-        self.X_list_name = X_list_name
-        self.Y_list_name = Y_list_name
-        if results_name is not None:
-            self.data_name = results_name
-        self.figsize = figsize
-        self.dpi = dpi
-        self.grid = grid
-        self.results = results
-
         """
         Plots a graph given a list of 1D params and params name (a list of strings).
         :params title:
@@ -214,22 +280,24 @@ class SimulatorLJ(Simulator):
         plt.rcParams["figure.figsize"] = self.figsize[0], self.figsize[1]
         plt.figure()
 
-        for i in range(len(params)):
+        for i in range(len(ylist)):
 
-            if len(self.grid.shape) == 1:  # shared
-                plt.plot(self.grid, self.results[i], label=str(self.result_name[i]))
+            if len(xlist.shape) == 1:  # shared
+                plt.plot(xlist, ylist[i], label=f"particle {i+1}")
 
-            if len(self.grid.shape) > 1:  # not shared
-                plt.plot(self.grid, self.results[i], label=str(self.results_name[i]))
+            if len(xlist.shape) > 1:  # not shared
+                plt.plot(xlist[i], ylist[i], label=f"particle {i+1}")
 
-            plt.xlabel(str(self.X_list_name), fontsize=20)
-            plt.ylabel(str(self.Y_list_name), fontsize=20)
-            plt.legend(fontsize=15)
-            plt.xticks(fontsize=16)
-            plt.yticks(fontsize=16)
+        plt.xlabel(str(xlist_name), fontsize=20)
+        plt.ylabel(str(ylist_name), fontsize=20)
+        plt.legend(fontsize=5)
+        plt.xticks(fontsize=16)
+        plt.yticks(fontsize=16)
 
-            # plt.show()
+        # plt.show()
 
-            plt.tight_layout()
-            plt.savefig(self.path + f"{self.title}.png", dpi=self.dpi)
-            plt.close()
+        plt.tight_layout()
+        plt.savefig(
+            f"{self.path}/{self.title}_{xlist_name}_{ylist_name}.png", dpi=self.dpi
+        )
+        plt.close()
