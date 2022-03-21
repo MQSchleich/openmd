@@ -23,7 +23,7 @@ class SimulatorLJ(Simulator):
         figsize=(10, 10),
         dpi=300,
     ) -> None:
-        
+
         self.path = path
         self.title = title
         self.mass = mass
@@ -68,7 +68,7 @@ class SimulatorLJ(Simulator):
         kinetic_energies = self._mean_kinetic_energy(velocities)
         potential_energies = self._mean_LJ_energy(self.force_constants, positions)
         total_energies = kinetic_energies + potential_energies
-        
+
         # needs to save to disk & plots
         """self.save_to_disk(positions, velocities, kinetic_energies, potential_energies, total_energies)
         self.plot_results("x", positions[:, 0, :], "y", positions[:, 1, :])
@@ -154,7 +154,6 @@ class SimulatorLJ(Simulator):
         )
         acc = forces / self.mass
         return acc
-    
 
     def force(self, positions, constants, box_length):
         """Standard LJ implementation with PBC. Does only return the force to introduce more modularity.
@@ -183,11 +182,13 @@ class SimulatorLJ(Simulator):
         return force
 
     def _mean_kinetic_energy(self, velocities):
-        
-        return np.mean(np.sum(0.5 * self.mass * np.power(velocities, 2), axis = 1), axis=0)
+
+        return np.mean(
+            np.sum(0.5 * self.mass * np.power(velocities, 2), axis=1), axis=0
+        )
 
     def _mean_LJ_energy(self, constants, positions):
-        
+
         epsilon, sigma = constants
         energy_store = np.zeros(positions.shape[2])
         for i in range(positions.shape[2]):
@@ -200,13 +201,24 @@ class SimulatorLJ(Simulator):
                 if self.periodic:
                     difference[difference > self.box_length * 0.5] -= self.box_length
                     difference[difference <= -self.box_length * 0.5] += self.box_length
-                    
-                sigma_6_temp = sigma*sigma*sigma*sigma*sigma*sigma # = sigma^6
+
+                sigma_6_temp = (
+                    sigma * sigma * sigma * sigma * sigma * sigma
+                )  # = sigma^6
                 # sigma_12_temp = sigma_6_temp*sigma_6_temp # = sigma^12
-                difference_6_temp = difference*difference*difference*difference*difference*difference # = difference^6
+                difference_6_temp = (
+                    difference
+                    * difference
+                    * difference
+                    * difference
+                    * difference
+                    * difference
+                )  # = difference^6
                 # difference_12_temp = difference_6_temp*difference_6_temp # = difference^12
-                sigma_over_difference = (sigma_6_temp / difference_6_temp)
-                potential_t = 4*epsilon*sigma_over_difference*(sigma_over_difference - 1)
+                sigma_over_difference = sigma_6_temp / difference_6_temp
+                potential_t = (
+                    4 * epsilon * sigma_over_difference * (sigma_over_difference - 1)
+                )
 
                 energy_store[i] = np.mean(potential_t)
 
@@ -262,7 +274,9 @@ class SimulatorLJ(Simulator):
             f"mean kinetic energies", kinetic_energies.shape, data=kinetic_energies
         )
         pe_set = results_file.create_dataset(
-            f"mean potential energies", potential_energies.shape, data=potential_energies
+            f"mean potential energies",
+            potential_energies.shape,
+            data=potential_energies,
         )
         E_set = results_file.create_dataset(
             f"total mean energies", total_energy.shape, data=total_energy

@@ -11,18 +11,17 @@
 import pycuda.driver as cuda
 import pycuda.autoinit
 from pycuda.compiler import SourceModule
-import numpy as np 
+import numpy as np
 import sys
 import os
-import matplotlib.pyplot as plt 
+import matplotlib.pyplot as plt
 import line_profiler
 
 
-
 # In[2]:
-module_path = os.path.abspath(os.path.join('..'))
+module_path = os.path.abspath(os.path.join(".."))
 if module_path not in sys.path:
-    sys.path.append(module_path+"/openmd")
+    sys.path.append(module_path + "/openmd")
 from SimulatorLJ import SimulatorLJ as Simulator
 
 
@@ -30,25 +29,25 @@ from SimulatorLJ import SimulatorLJ as Simulator
 
 gamma = 0.1
 dt = 0.001
-coordinates = np.array([[0,1,0],[0,2,0]])
-velocities = gamma*np.array([[0,1,0],[0,-1,0]])
+coordinates = np.array([[0, 1, 0], [0, 2, 0]])
+velocities = gamma * np.array([[0, 1, 0], [0, -1, 0]])
 constants = [1.0, 0.5]
 box_len = 6
 sim = Simulator(
-    path = r"./output",
-    title = "test_1",
-    mass = 1,
-    sim_time= 10 ,
-    time_step = dt,
-    initial_values = [coordinates,velocities],
-    box_length = box_len,
+    path=r"./output",
+    title="test_1",
+    mass=1,
+    sim_time=10,
+    time_step=dt,
+    initial_values=[coordinates, velocities],
+    box_length=box_len,
     force=None,
     force_constants=constants,
-    integrator=None,   
+    integrator=None,
     periodic=True,
 )
 
-positions, velocities =sim.simulate()
+positions, velocities = sim.simulate()
 
 
 # In[3]:
@@ -62,8 +61,7 @@ positions, velocities =sim.simulate()
 # In[4]:
 
 
-
-def force_lj_fast( positions, constants, box_length):
+def force_lj_fast(positions, constants, box_length):
     """
     :param positions:
     :type positions:
@@ -74,7 +72,7 @@ def force_lj_fast( positions, constants, box_length):
     :return:
     :rtype:
     """
-    
+
     epsilon, sigma = constants
     num = positions.shape[0]
     force = np.zeros((num, num, 3))
@@ -82,27 +80,29 @@ def force_lj_fast( positions, constants, box_length):
         for j in range(i + 1, num):
             difference = positions[j, :] - positions[i, :]
             distance = np.linalg.norm(difference)
-            #print("distance is", distance)
+            # print("distance is", distance)
             if distance > box_length / 2:
                 distance -= box_length / 2
             elif distance <= -box_length / 2:
                 distance += box_length / 2
-            if distance == 0: 
-                force[i,j] = 0 
-                force[j,i] = 0
+            if distance == 0:
+                force[i, j] = 0
+                force[j, i] = 0
                 break
-            #print("distance is", distance)
+            # print("distance is", distance)
             lj_part = (sigma / distance) ** 6
-            #print("dist, sig", distance, sigma)
-            #print(sigma/distance)
-            #print(0.01/3)
-            #print("lj",lj_part)
+            # print("dist, sig", distance, sigma)
+            # print(sigma/distance)
+            # print(0.01/3)
+            # print("lj",lj_part)
             lj_part_two = lj_part ** 2
             factor = 24 * epsilon
             factor_two = 2 * factor
-            force[i, j, :] = (factor_two * lj_part_two - factor * lj_part) * (difference/distance)
+            force[i, j, :] = (factor_two * lj_part_two - factor * lj_part) * (
+                difference / distance
+            )
             force[j, i, :] -= force[i, j, :]
-    #print(np.sum(force, axis=1))
+    # print(np.sum(force, axis=1))
     return np.sum(force, axis=1)
 
 
@@ -118,27 +118,27 @@ sim.force
 
 gamma = 0.1
 dt = 0.001
-coordinates = np.array([[0,1,0],[0,2,0]])
-velocities = gamma*np.array([[0,1,0],[0,-1,0]])
+coordinates = np.array([[0, 1, 0], [0, 2, 0]])
+velocities = gamma * np.array([[0, 1, 0], [0, -1, 0]])
 constants = [1.0, 0.5]
 box_len = 6
 sim = Simulator(
-    path = r"./output",
-    title = "test_1",
-    mass = 4,
-    sim_time= 40000*dt ,
-    time_step = dt,
-    initial_values = [coordinates,velocities],
-    box_length = box_len,
+    path=r"./output",
+    title="test_1",
+    mass=4,
+    sim_time=40000 * dt,
+    time_step=dt,
+    initial_values=[coordinates, velocities],
+    box_length=box_len,
     force=None,
     force_constants=constants,
-    integrator=None,   
+    integrator=None,
     periodic=True,
 )
 sim.force = force_lj_fast
 sim.force
 
-positions, velocities =sim.simulate()
+positions, velocities = sim.simulate()
 
 
 # In[20]:
@@ -195,7 +195,7 @@ def energy_lj_fast(positions, constants, box_length):
         * (np.power((distances / sigma), -12) - np.power((distances / sigma), -6))
     )
     e_pot[np.isnan(e_pot)] = 0
-    
+
     ## Replace using CUDA numerics
     return np.sum(e_pot)
 
@@ -248,12 +248,13 @@ def energy_gravity(positions, constants, box_length):
 # In[10]:
 
 
-energy =[]
+energy = []
 e_kin = []
-for i in range(positions.shape[2]): 
-    energy.append(energy_lj_fast(positions[:,:,i], constants=constants, box_length=box_len))
+for i in range(positions.shape[2]):
+    energy.append(
+        energy_lj_fast(positions[:, :, i], constants=constants, box_length=box_len)
+    )
     e_kin.append(kinetic_energy(velocities[:, :, i], 1))
-    
 
 
 # In[21]:
@@ -280,11 +281,4 @@ for i in range(positions.shape[2]):
 # In[ ]:
 
 
-
-
-
 # In[24]:
-
-
-
-
