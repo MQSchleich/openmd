@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 from Simulator import Simulator
+import line_profiler
 
 
 class SimulatorLJ(Simulator):
@@ -69,7 +70,7 @@ class SimulatorLJ(Simulator):
         total_energies = kinetic_energies + potential_energies
         
         # needs to save to disk & plots
-        self.save_to_disk(positions, velocities, kinetic_energies, potential_energies, total_energies)
+        """self.save_to_disk(positions, velocities, kinetic_energies, potential_energies, total_energies)
         self.plot_results("x", positions[:, 0, :], "y", positions[:, 1, :])
         self.plot_results("y", positions[:, 1, :], "z", positions[:, 2, :])
         self.plot_results("x", positions[:, 0, :], "z", positions[:, 2, :])
@@ -99,7 +100,7 @@ class SimulatorLJ(Simulator):
             np.linspace(0, self.sim_time, self.num_steps),
             "total energies",
             [total_energies],
-        )
+        )"""
 
         return (positions, velocities)
 
@@ -197,17 +198,21 @@ class SimulatorLJ(Simulator):
                     particle=j, positions=positions, box_length=self.box_length
                 )
                 if self.periodic:
-                    difference[difference > self.box_length / 2] -= self.box_length
-                    difference[difference <= -self.box_length / 2] += self.box_length
-
-                potential_t = 4 * epsilon * np.power(sigma, 12) / np.power(
-                    difference, 12
-                ) - 4 * epsilon * np.power(sigma, 6) / np.power(difference, 6)
+                    difference[difference > self.box_length * 0.5] -= self.box_length
+                    difference[difference <= -self.box_length * 0.5] += self.box_length
+                    
+                sigma_6_temp = sigma*sigma*sigma*sigma*sigma*sigma # = sigma^6
+                # sigma_12_temp = sigma_6_temp*sigma_6_temp # = sigma^12
+                difference_6_temp = difference*difference*difference*difference*difference*difference # = difference^6
+                # difference_12_temp = difference_6_temp*difference_6_temp # = difference^12
+                sigma_over_difference = (sigma_6_temp / difference_6_temp)
+                potential_t = 4*epsilon*sigma_over_difference*(sigma_over_difference - 1)
 
                 energy_store[i] = np.mean(potential_t)
 
         return energy_store
 
+    @profile
     def calc_pairwise_distance(self, particle, positions, box_length):
         """Standard euclidean pairwise distance. Is abstracted to enable innovation here.
 
@@ -264,9 +269,10 @@ class SimulatorLJ(Simulator):
         )
         results_file.close()
 
+    """
     def plot_results(self, xlist_name, xlist, ylist_name, ylist):
         # variables that needed
-        """
+        
         Plots a graph given a list of 1D params and params name (a list of strings).
         :params title:
         :params N_list_name:
@@ -275,7 +281,7 @@ class SimulatorLJ(Simulator):
         :params params:
         :params Figsize: ( default = (15,5) )
         :params Dpi:    ( default = 300 )
-        """
+        
 
         plt.rcParams["figure.figsize"] = self.figsize[0], self.figsize[1]
         plt.figure()
@@ -300,4 +306,4 @@ class SimulatorLJ(Simulator):
         plt.savefig(
             f"{self.path}/{self.title}_{xlist_name}_{ylist_name}.png", dpi=self.dpi
         )
-        plt.close()
+        plt.close()"""
