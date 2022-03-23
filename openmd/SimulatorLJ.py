@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 from Simulator import Simulator
+import line_profiler
 
 
 class SimulatorLJ(Simulator):
@@ -22,7 +23,7 @@ class SimulatorLJ(Simulator):
         figsize=(10, 10),
         dpi=300,
     ) -> None:
-        
+
         self.path = path
         self.title = title
         self.mass = mass
@@ -67,9 +68,9 @@ class SimulatorLJ(Simulator):
         kinetic_energies = self._mean_kinetic_energy(velocities)
         potential_energies = self._mean_LJ_energy(self.force_constants, positions)
         total_energies = kinetic_energies + potential_energies
-        
+
         # needs to save to disk & plots
-        self.save_to_disk(positions, velocities, kinetic_energies, potential_energies, total_energies)
+        """self.save_to_disk(positions, velocities, kinetic_energies, potential_energies, total_energies)
         self.plot_results("x", positions[:, 0, :], "y", positions[:, 1, :])
         self.plot_results("y", positions[:, 1, :], "z", positions[:, 2, :])
         self.plot_results("x", positions[:, 0, :], "z", positions[:, 2, :])
@@ -99,7 +100,7 @@ class SimulatorLJ(Simulator):
             np.linspace(0, self.sim_time, self.num_steps),
             "total energies",
             [total_energies],
-        )
+        )"""
 
         return (positions, velocities)
 
@@ -153,7 +154,6 @@ class SimulatorLJ(Simulator):
         )
         acc = forces / self.mass
         return acc
-    
 
     def force(self, positions, constants, box_length):
         """Standard LJ implementation with PBC. Does only return the force to introduce more modularity.
@@ -182,11 +182,13 @@ class SimulatorLJ(Simulator):
         return force
 
     def _mean_kinetic_energy(self, velocities):
-        
-        return np.mean(np.sum(0.5 * self.mass * np.power(velocities, 2), axis = 1), axis=0)
+
+        return np.mean(
+            np.sum(0.5 * self.mass * np.power(velocities, 2), axis=1), axis=0
+        )
 
     def _mean_LJ_energy(self, constants, positions):
-        
+
         epsilon, sigma = constants
         energy_store = np.zeros(positions.shape[2])
         for i in range(positions.shape[2]):
@@ -197,17 +199,32 @@ class SimulatorLJ(Simulator):
                     particle=j, positions=positions, box_length=self.box_length
                 )
                 if self.periodic:
-                    difference[difference > self.box_length / 2] -= self.box_length
-                    difference[difference <= -self.box_length / 2] += self.box_length
+                    difference[difference > self.box_length * 0.5] -= self.box_length
+                    difference[difference <= -self.box_length * 0.5] += self.box_length
 
-                potential_t = 4 * epsilon * np.power(sigma, 12) / np.power(
-                    difference, 12
-                ) - 4 * epsilon * np.power(sigma, 6) / np.power(difference, 6)
+                sigma_6_temp = (
+                    sigma * sigma * sigma * sigma * sigma * sigma
+                )  # = sigma^6
+                # sigma_12_temp = sigma_6_temp*sigma_6_temp # = sigma^12
+                difference_6_temp = (
+                    difference
+                    * difference
+                    * difference
+                    * difference
+                    * difference
+                    * difference
+                )  # = difference^6
+                # difference_12_temp = difference_6_temp*difference_6_temp # = difference^12
+                sigma_over_difference = sigma_6_temp / difference_6_temp
+                potential_t = (
+                    4 * epsilon * sigma_over_difference * (sigma_over_difference - 1)
+                )
 
                 energy_store[i] = np.mean(potential_t)
 
         return energy_store
 
+    @profile
     def calc_pairwise_distance(self, particle, positions, box_length):
         """Standard euclidean pairwise distance. Is abstracted to enable innovation here.
 
@@ -257,16 +274,19 @@ class SimulatorLJ(Simulator):
             f"mean kinetic energies", kinetic_energies.shape, data=kinetic_energies
         )
         pe_set = results_file.create_dataset(
-            f"mean potential energies", potential_energies.shape, data=potential_energies
+            f"mean potential energies",
+            potential_energies.shape,
+            data=potential_energies,
         )
         E_set = results_file.create_dataset(
             f"total mean energies", total_energy.shape, data=total_energy
         )
         results_file.close()
 
+    """
     def plot_results(self, xlist_name, xlist, ylist_name, ylist):
         # variables that needed
-        """
+        
         Plots a graph given a list of 1D params and params name (a list of strings).
         :params title:
         :params N_list_name:
@@ -275,7 +295,7 @@ class SimulatorLJ(Simulator):
         :params params:
         :params Figsize: ( default = (15,5) )
         :params Dpi:    ( default = 300 )
-        """
+        
 
         plt.rcParams["figure.figsize"] = self.figsize[0], self.figsize[1]
         plt.figure()
@@ -300,4 +320,4 @@ class SimulatorLJ(Simulator):
         plt.savefig(
             f"{self.path}/{self.title}_{xlist_name}_{ylist_name}.png", dpi=self.dpi
         )
-        plt.close()
+        plt.close()"""
