@@ -198,10 +198,10 @@ class SimulatorLJ(Simulator):
 
         epsilon, sigma = constants
         energy_store = np.zeros(positions.shape[2])
-        for i in range(positions.shape[2]):
+        for i in range(positions.shape[2]): # from time = 0 to time ...
             positions_3D = positions[:, :, i]
             energy = np.zeros((positions.shape[0], 3))
-            for j in range(len(energy)):
+            for j in range(len(energy)): # from particle 0 to particle 
                 difference = self.calc_pairwise_distance(
                     particle=j, positions=positions, box_length=self.box_length
                 )
