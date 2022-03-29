@@ -3,7 +3,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 import h5py
 from Simulator import Simulator
-import line_profiler
 
 
 class SimulatorLJ(Simulator):
@@ -65,9 +64,9 @@ class SimulatorLJ(Simulator):
             )
 
         # calculate energies
-        kinetic_energies = self._mean_kinetic_energy(velocities)
-        potential_energies = self._mean_LJ_energy(self.force_constants, positions)
-        total_energies = kinetic_energies + potential_energies
+        # kinetic_energies = self._mean_kinetic_energy(velocities)
+        # potential_energies = self._mean_LJ_energy(self.force_constants, positions)
+        # total_energies = kinetic_energies + potential_energies
 
         # needs to save to disk & plots
         """self.save_to_disk(positions, velocities, kinetic_energies, potential_energies, total_energies)
@@ -224,7 +223,6 @@ class SimulatorLJ(Simulator):
 
         return energy_store
 
-    @profile
     def calc_pairwise_distance(self, particle, positions, box_length):
         """Standard euclidean pairwise distance. Is abstracted to enable innovation here.
 
