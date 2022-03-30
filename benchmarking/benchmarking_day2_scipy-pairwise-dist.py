@@ -1,6 +1,8 @@
-from scipy.spatial import distance_matrix
+from scipy.spatial import distance
 import line_profiler
 import numpy as np
+
+# np.random.seed(0)
 
 box_length = 6  # shape
 
@@ -20,13 +22,12 @@ parts_1000 = np.random.rand(1000, 3)
 parts_10000 = np.random.rand(10000, 3)
 
 # 100'000 particles
-parts_100000 = np.random.rand(np.int32(1e6), 3)
+parts_100000 = np.random.rand(np.int32(1e5), 3)
+
 
 @profile
 def test_pairwise_Scipy(positions):
-    for particle_id in range(positions.shape[0]):
-        a = distance_matrix(positions)
-        print(a)
+    distance.pdist(positions)  # = root(x^2 + y^2 + z^2)
 
 
-test_pairwise_Scipy(parts_2)
+test_pairwise_Scipy(parts_100000)

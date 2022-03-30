@@ -2,6 +2,7 @@ import scipy
 import line_profiler
 import numpy as np
 
+
 @profile
 def calc_pairwise_distance(particle, positions, box_length):
     """Standard euclidean pairwise distance. Is abstracted to enable innovation here.
@@ -37,13 +38,13 @@ parts_1000 = np.random.rand(1000, 3)
 parts_10000 = np.random.rand(10000, 3)
 
 # 100'000 particles
-parts_100000 = np.random.rand(np.int32(1e6), 3)
+parts_100000 = np.random.rand(np.int32(1e5), 3)
+
 
 @profile
 def test_pairwise_ZA(positions):
     for particle_id in range(positions.shape[0]):
-        a = calc_pairwise_distance(particle_id, positions, box_length)
-        print(a)
+        calc_pairwise_distance(particle_id, positions, box_length)
 
 
 test_pairwise_ZA(parts_100000)
