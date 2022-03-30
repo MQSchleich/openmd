@@ -54,11 +54,15 @@ class SimulatorLJ(Simulator):
         :return:
         """
         # assert type(force_constants) == float, "force constant must be of type float but is"+str(type(float))
-        positions, velocities = self.allocate_simulation()
+        positions, velocities, forces = self.allocate_simulation()
         # calculate chunks such that the for-loop from the integretor is written here and the integrator just called
         for i in range(self.num_steps - 1):
 
-            positions[:, :, i + 1], velocities[:, :, i + 1] = self.integrator(
+            (
+                positions[:, :, i + 1],
+                velocities[:, :, i + 1],
+                forces[:, :, i + 1],
+            ) = self.integrator(
                 positions=positions[:, :, i],
                 velocities=velocities[:, :, i],
                 iteration=i,
@@ -70,7 +74,10 @@ class SimulatorLJ(Simulator):
         total_energies = kinetic_energies + potential_energies
 
         # needs to save to disk & plots
-        """self.save_to_disk(positions, velocities, kinetic_energies, potential_energies, total_energies)
+        self.save_to_disk(
+            positions, velocities, forces, kinetic_energies, potential_energies, total_energies
+        )
+        """
         self.plot_results("x", positions[:, 0, :], "y", positions[:, 1, :])
         self.plot_results("y", positions[:, 1, :], "z", positions[:, 2, :])
         self.plot_results("x", positions[:, 0, :], "z", positions[:, 2, :])
@@ -102,7 +109,7 @@ class SimulatorLJ(Simulator):
             [total_energies],
         )"""
 
-        return (positions, velocities)
+        return (positions, velocities, forces)
 
     def integrator(self, positions, velocities, iteration):
         """Abstracted the integrator to the core algorithm because the loop happens in the war
@@ -120,9 +127,10 @@ class SimulatorLJ(Simulator):
         if self.periodic == True:
             positions[positions > self.box_length / 2] -= self.box_length
             positions[positions <= -self.box_length / 2] += self.box_length
-        acc = self.calc_accel(positions[:, :], self.force_constants)
+        forces = self.calc_accel(positions[:, :], self.force_constants)
+        acc = forces / self.mass
         velocities = velocities + 0.5 * acc * self.time_step
-        return [positions, velocities]
+        return [positions, velocities, forces]
 
     def apply_boundary():
         raise NotImplementedError
@@ -152,8 +160,7 @@ class SimulatorLJ(Simulator):
         forces = self.force(
             positions=positions, constants=constants, box_length=self.box_length
         )
-        acc = forces / self.mass
-        return acc
+        return forces
 
     def force(self, positions, constants, box_length):
         """Standard LJ implementation with PBC. Does only return the force to introduce more modularity.
@@ -191,10 +198,10 @@ class SimulatorLJ(Simulator):
 
         epsilon, sigma = constants
         energy_store = np.zeros(positions.shape[2])
-        for i in range(positions.shape[2]):
+        for i in range(positions.shape[2]): # from time = 0 to time ...
             positions_3D = positions[:, :, i]
             energy = np.zeros((positions.shape[0], 3))
-            for j in range(len(energy)):
+            for j in range(len(energy)): # from particle 0 to particle 
                 difference = self.calc_pairwise_distance(
                     particle=j, positions=positions, box_length=self.box_length
                 )
@@ -254,14 +261,22 @@ class SimulatorLJ(Simulator):
         velocities = np.zeros(
             (initial_velocities.shape[0], initial_velocities.shape[1], self.num_steps)
         )
+        forces = np.zeros(
+            (initial_velocities.shape[0], initial_velocities.shape[1], self.num_steps)
+        )
         positions[:, :, 0] = initial_positions
         velocities[:, :, 0] = initial_velocities
-        return (positions, velocities)
+        return (positions, velocities, forces)
 
     def save_to_disk(
-        self, positions, velocities, kinetic_energies, potential_energies, total_energy
+        self,
+        positions,
+        velocities,
+        forces,
+        kinetic_energies,
+        potential_energies,
+        total_energy,
     ):
-        # variables that needed
 
         results_file = h5py.File(f"{self.path}/{self.title}.hdf5", "w")
         rset = results_file.create_dataset(
@@ -270,6 +285,7 @@ class SimulatorLJ(Simulator):
         vset = results_file.create_dataset(
             f"velocities", velocities.shape, data=velocities
         )
+        fset = results_file.create_dataset(f"forces", forces.shape, data=forces)
         ke_set = results_file.create_dataset(
             f"mean kinetic energies", kinetic_energies.shape, data=kinetic_energies
         )
@@ -285,7 +301,6 @@ class SimulatorLJ(Simulator):
 
     """
     def plot_results(self, xlist_name, xlist, ylist_name, ylist):
-        # variables that needed
         
         Plots a graph given a list of 1D params and params name (a list of strings).
         :params title:
