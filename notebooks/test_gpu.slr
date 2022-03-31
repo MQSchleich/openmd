@@ -1,0 +1,22 @@
+#!/bin/bash -x
+
+#SBATCH --account=training2203
+
+#SBATCH --nodes=1
+
+#SBATCH --output=gpu-out.%j
+
+#SBATCH --error=gpu-err.%j
+
+#SBATCH --time=00:10:00
+
+#SBATCH --partition=booster
+
+#SBATCH --reservation=gpuhack22-31
+
+#SBATCH --gres=gpu:4
+
+module load Nsight-Systems
+
+
+nsys profile --trace=cuda,nvtx --output=pycuda_example srun python test_numerics.py

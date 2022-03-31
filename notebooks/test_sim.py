@@ -28,7 +28,7 @@ gpuForcesC(float *fx, float *fy, float *fz, float *positions, float epsilon, flo
             dx = positions[j*3] -   positions[i*3];
             dy = positions[j*3+1] - positions[i*3+1];
             dz = positions[j*3+2] - positions[i*3+2];
-            distance = sqrtf(dx*dx + dy*dy + dz*dz);
+            distance = sqrtd(dx*dx + dy*dy + dz*dz);
             distance = 1/distance;
             distance_sq = distance*distance;
             distance_six = distance_sq*distance_sq*distance_sq;
@@ -58,7 +58,7 @@ gpuForcesC(float *fx, float *fy, float *fz, float *positions, float epsilon, flo
 stream = []
 stream.append(drv.Stream())
 
-X = np.random.random((100000, 3))
+X = np.array([[0,0,0], [1,0,0]],dtype=np.float32,order='C')
 # X = np.array([[0, 1, 0], [5, 5, 5], [6, 0, 6], [4,3,5]],dtype=np.float32,order='C')
 XRM = np.ravel(X)
 ndim = np.shape(X)[0]
@@ -91,3 +91,7 @@ f_gpu(
 )
 
 stream[0].synchronize()
+
+print(fx_gpu.get())
+print(fy_gpu.get())
+print(fz_gpu.get())
