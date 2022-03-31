@@ -10,7 +10,7 @@ def force_pre_cuda(positions, constants, box_length):
     positions = np.ravel(positions)
     epsilon = constants[0]
     sigma = constants[1]
-    sigma_six = sigma**6
+    sigma_six = sigma ** 6
     prefactor_lj = 24 * epsilon * sigma_six
     fx = np.zeros(num)
     fy = np.zeros(num)
