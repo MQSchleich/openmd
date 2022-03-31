@@ -8,14 +8,9 @@
 
 # get_ipython().run_line_magic('matplotlib', 'inline')
 
-import pycuda.driver as cuda
-import pycuda.autoinit
-from pycuda.compiler import SourceModule
 import numpy as np
 import sys
 import os
-import matplotlib.pyplot as plt
-import line_profiler
 
 
 # In[2]:
@@ -152,8 +147,7 @@ positions, velocities = sim.simulate()
 
 
 def energy_lj(positions, constants, box_length):
-    """
-    """
+    """ """
     for i in range(0, num - 1):
         for j in range(i + 1, num):
             difference = positions[j, :] - positions[i, :]
@@ -201,7 +195,7 @@ def energy_lj_fast(positions, constants, box_length):
 
 
 def kinetic_energy(V, M):
-    """Calculates the kinetic energy 
+    """Calculates the kinetic energy
 
     Args:
         V ([type]): [description]
