@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-import pycuda.autoinit
 import pycuda.driver as drv
 from pycuda.compiler import SourceModule
 from pycuda import gpuarray
