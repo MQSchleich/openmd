@@ -1,9 +1,7 @@
 #!/usr/bin/env python
-import pycuda.autoinit
 import pycuda.driver as drv
 from pycuda.compiler import SourceModule
 from pycuda import gpuarray
-from math import sqrt
 import numpy as np
 
 kerneltemplate = SourceModule(
@@ -76,24 +74,22 @@ gpuForcesParallelo(double3 *forces, double3 *positions, double epsilon, double s
 
 for i in range(1):
     print("run: ", i)
-    
+
     stream = []
     stream.append(drv.Stream())
 
-    X = np.array([[0,0,0], [1,0,0]], dtype=np.float64,order='C')
+    X = np.array([[0, 0, 0], [1, 0, 0]], dtype=np.float64, order="C")
     # X = np.array([[0,0,0], [1,0,0], [3,-2,0], [11,-2,3]], dtype=np.float64,order='C')
     # X = np.array([[0, 1, 0], [5, 5, 5], [6, 0, 6], [4,3,5]],dtype=np.float32,order='C')
     XRM = np.ravel(X)
     ndim = np.shape(X)[0]
     nvdim = np.shape(X)[1]
 
-
     forces = np.ravel(np.zeros((ndim, 3), dtype=np.float64))
 
     forces_gpu = gpuarray.empty(shape=forces.shape, dtype=np.float64)
 
     XRM_gpu = gpuarray.to_gpu(XRM)
-
 
     f_gpu = kerneltemplate.get_function("gpuForcesParallelo")
     # f_gpu = kerneltemplate.get_function("gpuForcesC")
@@ -105,9 +101,9 @@ for i in range(1):
         np.int32(ndim),
         block=(ndim, 1, 1),
         stream=stream[0],
-        grid=(1, 1, 1)
+        grid=(1, 1, 1),
     )
 
     stream[0].synchronize()
 
-    print(np.reshape(forces_gpu.get(),(ndim,3), order='C'))
+    print(np.reshape(forces_gpu.get(), (ndim, 3), order="C"))

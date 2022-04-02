@@ -57,7 +57,7 @@ gpuForcesC(float *fx, float *fy, float *fz, float *positions, float epsilon, flo
 stream = []
 stream.append(drv.Stream())
 
-X = np.array([[0,0,0], [1,0,0]],dtype=np.float32,order='C')
+X = np.array([[0, 0, 0], [1, 0, 0]], dtype=np.float32, order="C")
 # X = np.array([[0, 1, 0], [5, 5, 5], [6, 0, 6], [4,3,5]],dtype=np.float32,order='C')
 XRM = np.ravel(X)
 ndim = np.shape(X)[0]
