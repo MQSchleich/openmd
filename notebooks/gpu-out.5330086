@@ -1,0 +1,9 @@
+run:  0
+result -1.125000 
+result 24.000000 
+result -0.274348 
+[-1.39934842  0.          0.        ]
+Generating '/tmp/nsys-report-1f6d.qdstrm'
+[1/1] [0%                          ] pycuda_example.nsys-rep[1/1] [0%                          ] pycuda_example.nsys-rep[1/1] [4%                          ] pycuda_example.nsys-rep[1/1] [===========50%              ] pycuda_example.nsys-rep[1/1] [===========51%              ] pycuda_example.nsys-rep[1/1] [===========52%              ] pycuda_example.nsys-rep[1/1] [===========53%              ] pycuda_example.nsys-rep[1/1] [============54%             ] pycuda_example.nsys-rep[1/1] [=====================87%    ] pycuda_example.nsys-rep[1/1] [=====================88%    ] pycuda_example.nsys-rep[1/1] [========================100%] pycuda_example.nsys-rep[1/1] [========================100%] pycuda_example.nsys-rep
+Generated:
+    /p/project/training2203/pynamics/openmd/notebooks/pycuda_example.nsys-rep
