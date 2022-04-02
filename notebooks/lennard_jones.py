@@ -90,7 +90,7 @@ def force_lj_fast(positions, constants, box_length):
             # print(sigma/distance)
             # print(0.01/3)
             # print("lj",lj_part)
-            lj_part_two = lj_part ** 2
+            lj_part_two = lj_part**2
             factor = 24 * epsilon
             factor_two = 2 * factor
             force[i, j, :] = (factor_two * lj_part_two - factor * lj_part) * (

@@ -4,13 +4,13 @@ import numpy as np
 from numba import njit
 
 
-@njit()
+@njit(parallel=True)
 def force_pre_cuda(positions, constants, box_length):
     num = positions.shape[0]
     positions = np.ravel(positions)
     epsilon = constants[0]
     sigma = constants[1]
-    sigma_six = sigma ** 6
+    sigma_six = sigma**6
     prefactor_lj = 24 * epsilon * sigma_six
     fx = np.zeros(num)
     fy = np.zeros(num)
@@ -38,13 +38,16 @@ def force_pre_cuda(positions, constants, box_length):
     return fx, fy, fz
 
 
+num_rep = 10
 positions = np.array([[1, 1, 1], [1, 2, 2]])
 force_pre_cuda(positions, np.array([1.0, 1.0]), 10)
-for particles in [2, 10, 100, 1000, 10000]:
+for particles in [10, 100, 1000, 10000, 100000]:
+    if particles == 100000:
+        num_rep = 10
     positions = np.random.random((particles, 3))
     print(len(positions), "particles")
-    times = np.zeros(100)
-    for i in range(100):
+    times = np.zeros(num_rep)
+    for i in range(num_rep):
         a = time.time()
         force_pre_cuda(positions, np.array([1.0, 1.0]), 1000)
         b = time.time()
