@@ -3,6 +3,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 ![Test](https://github.com/MQSchleich/continuous-template/actions/workflows/python-app.yaml/badge.svg?branch=main)
 
+# Code is not maintained on GitHub any longer all code moves to [Codeberg](https://codeberg.org/sail.black)
 
 # OpenMD 
 
