@@ -2,11 +2,19 @@ from turtle import pos
 import numpy as np
 import matplotlib.pyplot as plt
 import h5py
-from Simulator import Simulator
-import line_profiler
+from source.openmd.Simulator import Simulator
 
 
 class SimulatorLJ(Simulator):
+    """ Simulates a system of particels within a boundary influenced exclusively by Leonard Jones potential
+    
+        and ultilizing velocity verlet algorithm to integrate sympletic equations of motion up to 3D.
+        
+        the results would be saved in a directory set by user as a .hdf file.
+        
+    Args:
+        Simulator (_type_): _description_
+    """
     def __init__(
         self,
         path,
@@ -44,82 +52,33 @@ class SimulatorLJ(Simulator):
         self.dpi = dpi
 
     def simulate(self):
-        """
-        velocity verlet algorithm to integrate sympletic equations of motion up to 3D
-        :param grid:
-        :param time_step:
-        :param initial_values:
-        :param acc_func:
-        :param acc_constants:
-        :return:
+        """Ultilizes velocity verlet algorithm to integrate sympletic equations of motion up to 3D with initial conditions.
+
+        Returns:
+            tuple: 3D positions and velocities of all particles in whole simulation time. 
         """
         # assert type(force_constants) == float, "force constant must be of type float but is"+str(type(float))
-        positions, velocities, forces = self.allocate_simulation()
+        positions, velocities = self.allocate_simulation()
         # calculate chunks such that the for-loop from the integretor is written here and the integrator just called
         for i in range(self.num_steps - 1):
 
-            (
-                positions[:, :, i + 1],
-                velocities[:, :, i + 1],
-                forces[:, :, i + 1],
-            ) = self.integrator(
+            positions[:, :, i + 1], velocities[:, :, i + 1] = self.integrator(
                 positions=positions[:, :, i],
                 velocities=velocities[:, :, i],
                 iteration=i,
             )
 
-        # calculate energies
-        kinetic_energies = self._mean_kinetic_energy(velocities)
-        potential_energies = self._mean_LJ_energy(self.force_constants, positions)
-        total_energies = kinetic_energies + potential_energies
-
-        # needs to save to disk & plots
-        self.save_to_disk(
-            positions, velocities, forces, kinetic_energies, potential_energies, total_energies
-        )
-        """
-        self.plot_results("x", positions[:, 0, :], "y", positions[:, 1, :])
-        self.plot_results("y", positions[:, 1, :], "z", positions[:, 2, :])
-        self.plot_results("x", positions[:, 0, :], "z", positions[:, 2, :])
-        for i in range(3):
-            self.plot_results(
-                "time",
-                np.linspace(0, self.sim_time, self.num_steps),
-                "velocity",
-                velocities[:, i, :],
-            )
-        self.plot_results(
-            "time",
-            np.linspace(0, self.sim_time, self.num_steps),
-            "kinetic energy",
-            [kinetic_energies],
-        )
-
-        self.plot_results(
-            "time",
-            np.linspace(0, self.sim_time, self.num_steps),
-            "potential energy",
-            [potential_energies],
-        )
-
-        self.plot_results(
-            "time",
-            np.linspace(0, self.sim_time, self.num_steps),
-            "total energies",
-            [total_energies],
-        )"""
-
-        return (positions, velocities, forces)
+        return (positions, velocities)
 
     def integrator(self, positions, velocities, iteration):
-        """Abstracted the integrator to the core algorithm because the loop happens in the war
+        """Numerical integration by Velocity-Verlet Algorithm.
 
         Args:
-            positions (_type_): _description_
-            velocities (_type_): _description_
+            positions (ndarry): 3D positions of all the particles in a system, in a single time frame. 
+            velocities (ndarry): 3D velocities of all the particles in a system, in a single time frame.
 
         Returns:
-            _type_: _description_
+            list: A list containing the simulated positions and velocities of all particles in the form [positions, velocities].
         """
         i = iteration
 
@@ -127,20 +86,21 @@ class SimulatorLJ(Simulator):
         if self.periodic == True:
             positions[positions > self.box_length / 2] -= self.box_length
             positions[positions <= -self.box_length / 2] += self.box_length
-        forces = self.calc_accel(positions[:, :], self.force_constants)
-        acc = forces / self.mass
+        acc = self.calc_accel(positions[:, :], self.force_constants)
         velocities = velocities + 0.5 * acc * self.time_step
-        return [positions, velocities, forces]
+        return [positions, velocities]
 
     def apply_boundary():
+        """Not implemented yet
+        """
         raise NotImplementedError
 
     def allocate_simulation(self):
 
-        """Pre allocating RAM for the integration
+        """Pre allocating RAM for the integration.
 
         Returns:
-            _type_: _description_
+            tuple: 3D positions and velocities of all particles in whole simulation time.
         """
 
         initial_positions = self.initial_pos
@@ -156,22 +116,32 @@ class SimulatorLJ(Simulator):
         return (positions, velocities)
 
     def calc_accel(self, positions, constants):
+        """Calculates the acceleration of the particle exerted by the force from the Leonard Jones potential.
+
+        Args:
+            positions (ndarray): 3D positions.
+            constants (tuple): sigma, epsilon constants
+
+        Returns:
+            ndarray: array of accelerations
+        """
 
         forces = self.force(
             positions=positions, constants=constants, box_length=self.box_length
         )
-        return forces
+        acc = forces / self.mass
+        return acc
 
     def force(self, positions, constants, box_length):
-        """Standard LJ implementation with PBC. Does only return the force to introduce more modularity.
+        """Standard Loenard Jones implementation with PBC. Does only return the force to introduce more modularity.
 
         Args:
-            positions (_type_): 3D positions
-            constants (_type_): sigma, epsilon constants
-            box_length (_type_): length of the periodic box
+            positions (ndarray): 3D positions
+            constants (tuple): sigma, epsilon constants
+            box_length (float): length of the periodic box
 
         Returns:
-            _type_:  array of forces
+            ndarray:  array of forces
         """
         force = np.zeros((positions.shape[0], 3))
         epsilon, sigma = constants
@@ -198,10 +168,10 @@ class SimulatorLJ(Simulator):
 
         epsilon, sigma = constants
         energy_store = np.zeros(positions.shape[2])
-        for i in range(positions.shape[2]): # from time = 0 to time ...
+        for i in range(positions.shape[2]):
             positions_3D = positions[:, :, i]
             energy = np.zeros((positions.shape[0], 3))
-            for j in range(len(energy)): # from particle 0 to particle 
+            for j in range(len(energy)):
                 difference = self.calc_pairwise_distance(
                     particle=j, positions=positions, box_length=self.box_length
                 )
@@ -231,9 +201,8 @@ class SimulatorLJ(Simulator):
 
         return energy_store
 
-    @profile
     def calc_pairwise_distance(self, particle, positions, box_length):
-        """Standard euclidean pairwise distance. Is abstracted to enable innovation here.
+        """Standard euclidean pairwise distance. Can be abstracted to enable innovation here.
 
         Args:
             positions (_type_): 3D positions
@@ -261,22 +230,24 @@ class SimulatorLJ(Simulator):
         velocities = np.zeros(
             (initial_velocities.shape[0], initial_velocities.shape[1], self.num_steps)
         )
-        forces = np.zeros(
-            (initial_velocities.shape[0], initial_velocities.shape[1], self.num_steps)
-        )
         positions[:, :, 0] = initial_positions
         velocities[:, :, 0] = initial_velocities
-        return (positions, velocities, forces)
+        return (positions, velocities)
 
     def save_to_disk(
-        self,
-        positions,
-        velocities,
-        forces,
-        kinetic_energies,
-        potential_energies,
-        total_energy,
+        self, positions, velocities, kinetic_energies, potential_energies, total_energy
     ):
+        """Saves the result of the simulation of in a .hdf file. 
+        The results include positions, velocities, kinetic energies, potential energies, and total energies
+        of each particle in whole simulation time.
+
+        Args:
+            positions (ndarray): 3D positions of all particles in a whole simulation time.
+            velocities (ndarray): 3D velocities of all particles in a whole simulation time.
+            kinetic_energies (ndarray): kinetic energies of all particles in a whole simulation time.
+            potential_energies (ndarray): potential energies of all particles in a whole simulation time.
+            total_energy (ndarray):total energies of all particles in a whole simulation time.
+        """
 
         results_file = h5py.File(f"{self.path}/{self.title}.hdf5", "w")
         rset = results_file.create_dataset(
@@ -285,7 +256,6 @@ class SimulatorLJ(Simulator):
         vset = results_file.create_dataset(
             f"velocities", velocities.shape, data=velocities
         )
-        fset = results_file.create_dataset(f"forces", forces.shape, data=forces)
         ke_set = results_file.create_dataset(
             f"mean kinetic energies", kinetic_energies.shape, data=kinetic_energies
         )
@@ -299,40 +269,4 @@ class SimulatorLJ(Simulator):
         )
         results_file.close()
 
-    """
-    def plot_results(self, xlist_name, xlist, ylist_name, ylist):
-        
-        Plots a graph given a list of 1D params and params name (a list of strings).
-        :params title:
-        :params N_list_name:
-        :params N_list:
-        :params params_name:
-        :params params:
-        :params Figsize: ( default = (15,5) )
-        :params Dpi:    ( default = 300 )
-        
 
-        plt.rcParams["figure.figsize"] = self.figsize[0], self.figsize[1]
-        plt.figure()
-
-        for i in range(len(ylist)):
-
-            if len(xlist.shape) == 1:  # shared
-                plt.plot(xlist, ylist[i], label=f"particle {i+1}")
-
-            if len(xlist.shape) > 1:  # not shared
-                plt.plot(xlist[i], ylist[i], label=f"particle {i+1}")
-
-        plt.xlabel(str(xlist_name), fontsize=20)
-        plt.ylabel(str(ylist_name), fontsize=20)
-        plt.legend(fontsize=5)
-        plt.xticks(fontsize=16)
-        plt.yticks(fontsize=16)
-
-        # plt.show()
-
-        plt.tight_layout()
-        plt.savefig(
-            f"{self.path}/{self.title}_{xlist_name}_{ylist_name}.png", dpi=self.dpi
-        )
-        plt.close()"""
